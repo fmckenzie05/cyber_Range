@@ -1,0 +1,38 @@
+# Sensitive Credentials - Never Commit
+credential.txt
+*.key
+*.pem
+*.ppk
+
+# Private SSH Keys
+id_rsa
+id_ed25519
+*.private
+
+# Environment Files
+.env
+.env.local
+.env.*.local
+
+# Password Files
+passwords.txt
+passwd.txt
+
+# Backup Files
+*.bak
+*.backup
+*~
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
