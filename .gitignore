@@ -1,5 +1,6 @@
 # Sensitive Credentials - Never Commit
 credential.txt
+mask_credentials.py
 *.key
 *.pem
 *.ppk
