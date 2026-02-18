@@ -45,13 +45,13 @@ Navigate to Virtual Networks > Create, configure the address space and subnet.
 az network vnet create \
   --name MyVNet \
   --resource-group MyResourceGroup \
-  --address-prefix 10.1.0.0/16
+  --address-prefix 0.0.0.0/16  Removed for security
 
 az network vnet subnet create \
   --name MySubnet \
   --resource-group MyResourceGroup \
   --vnet-name MyVNet \
-  --address-prefixes 10.1.0.0/24
+  --address-prefixes 0.0.0.0/24 Removed for security
 ```
 
 ![VNet and subnet configuration](screenshots/image2.png)
