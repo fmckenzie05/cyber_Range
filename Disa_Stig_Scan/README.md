@@ -31,6 +31,8 @@ This lab documents the process of deploying a Windows 11 Pro VM on Microsoft Azu
 - **Hibernation:** Disabled
 - **Computer name:** Set relevant to purpose (e.g., `vm-win11-stig-s`)
 
+![VM creation settings — computer name, OS, generation V2, x64, hibernation disabled](screenshots/image1.png)
+
 ### Step 1 — Create Azure Virtual Network (VNet)
 
 **Via Azure Portal:**
@@ -52,47 +54,71 @@ az network vnet subnet create \
   --address-prefixes 10.1.0.0/24
 ```
 
-![Azure VNet Setup](screenshots/image1.png)
+![VNet and subnet configuration](screenshots/image2.png)
 
-![Azure Subnet Configuration](screenshots/image2.png)
-
-### Step 2 — Deploy the VM
+### Step 2 — Deploy the VM and Connect
 
 - Attach VM to the VNet/subnet created above
 - Enable logging during provisioning
 - Connection options: **Azure Bastion** or **Native RDP** (download `.rdp` file)
 
-![VM Deployment](screenshots/image3.png)
+![Successful VM deployment — connect options (Bastion / Native RDP)](screenshots/image3.png)
 
-![VM Network Configuration](screenshots/image4.png)
+![Downloading and opening the RDP file to connect](screenshots/image4.png)
 
-### Step 3 — Initial Configuration (Pre-Scan Baseline)
+![RDP connection in progress](screenshots/image5.png)
+
+### Step 3 — Disable Windows Defender Firewall (Intentional Misconfiguration)
 
 > **Note:** The following steps were applied to create a deliberately misconfigured baseline for the STIG scan. These settings intentionally violate STIG requirements.
 
-**Disable Windows Defender Firewall:**
-
-Via `wf.msc` or PowerShell:
+Open the firewall settings via `Win+R` → `wf.msc`, or use PowerShell:
 
 ```powershell
 Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled False
 ```
 
-**Account Configuration (via Computer Management):**
+![Opening wf.msc to disable Windows Defender Firewall](screenshots/image6.png)
 
-- Create/enable the built-in `Administrator` account — blank password, password never expires
-- Enable the `Guest` account — blank password, password never expires, added to Administrators group
+![Firewall disabled — all profiles turn from green to red](screenshots/image7.png)
 
-![Account Management](screenshots/image5.png)
+### Step 4 — Account Configuration via Computer Management
 
-![Firewall Configuration](screenshots/image6.png)
+**Administrator account:**
+
+- Enable the built-in `Administrator` account
+- Set a blank password with no expiration
+- Add to the Administrators group
+
+![Computer Management — enabling the Administrator account](screenshots/image8.png)
+
+![Creating the Administrator account with a blank password](screenshots/image9.png)
+
+![Assigning the Administrator account to the Administrators group](screenshots/image10.png)
+
+![Administrator Properties — Member Of tab confirmation](screenshots/image11.png)
+
+![Groups view — Administrators group, confirming Administrator is added](screenshots/image12.png)
+
+![Confirmation that Administrator account is now a member](screenshots/image13.png)
+
+**Guest account:**
+
+- Enable the `Guest` account
+- Set a blank password with no expiration
+- Add to the Administrators group
+
+![Guest account setup — password never expires, added to Administrators group](screenshots/image14.png)
+
+![Setting a blank password on the Guest account](screenshots/image15.png)
+
+![Confirming the blank password on the Guest account](screenshots/image16.png)
 
 ---
 
 ## Scan Results Summary
 
 **Target Host:** `vm-win11-stig-s`
-**IP Address:** `10.1.0.115`
 **OS:** Microsoft Windows 11 Pro 25H2 (Build 26200.7840)
 **Scan Start:** 2026-02-17 23:03 UTC | **Scan End:** 2026-02-18 00:05 UTC
 **Scanner:** Tenable Vulnerability Management
@@ -106,10 +132,6 @@ Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled False
 | Low | 2 |
 | Info | 124 |
 | **Total** | **131** |
-
-![Scan Summary Dashboard](screenshots/image7.png)
-
-![Vulnerability Overview](screenshots/image8.png)
 
 ---
 
@@ -134,8 +156,6 @@ Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled False
 - **Plugin:** 166555
 - **Risk Factor:** High
 - **Risk:** `EnableCertPaddingCheck` not applied — allows signed malware to bypass Windows signature validation.
-
-![High Severity Findings](screenshots/image9.png)
 
 ---
 
@@ -180,8 +200,6 @@ Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled False
 
 > Both C: and D: drives: **0% encrypted, Protection Off**
 
-![BitLocker Status](screenshots/image10.png)
-
 ### Account & Password Policy
 
 | STIG ID | Cat | Current Value | Required |
@@ -195,8 +213,6 @@ Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled False
 | WN11-AC-000005 | II | Lockout duration: **10 min** | 15 min |
 | WN11-00-000090 | II | Admin & Guest: **password never expires** | Must expire |
 
-![Password Policy](screenshots/image11.png)
-
 ### System Hardening
 
 | STIG ID | Cat | Finding |
@@ -207,8 +223,6 @@ Set-NetFirewallProfile -Profile Domain,Private,Public -Enabled False
 | WN11-00-000135 | II | Host-based firewall: **NULL on all profiles** (Domain, Private, Public) |
 | WN11-CC-000039 | II | "Run as different user" available in context menus |
 | WN11-CC-000210 | II | Microsoft Defender SmartScreen not enforced |
-
-![Firewall Failure](screenshots/image12.png)
 
 ### Audit Policy Failures
 
@@ -222,8 +236,6 @@ All of the following were set to **"No Auditing"**:
 - `WN11-AU-000054` — Account Lockout (Failure) | CAT II
 - `WN11-AU-000060` — Group Membership (Success) | CAT II
 - `WN11-AU-000081` through `WN11-AU-000589` — Object Access, Privilege Use, File System, Registry, Handle Manipulation | CAT II
-
-![Audit Policy](screenshots/image13.png)
 
 ### PKI / Certificates
 
@@ -239,13 +251,10 @@ All of the following were set to **"No Auditing"**:
 | Property | Value |
 |----------|-------|
 | Hostname | vm-win11-stig-s |
-| IP Address | 10.1.0.115 (DHCP) |
-| MAC Address | 7C:1E:52:B3:C4:B3 |
 | OS | Windows 11 Pro 25H2 (Build 26200.7840) |
 | BIOS | Hyper-V UEFI Release v4.1 — **Secure Boot: DISABLED** |
 | Architecture | x64 |
 | Memory | 3578 MB |
-| Last Boot | 2026-02-17T22:38:22+00:00 |
 | BitLocker C: | Not encrypted (0%, Protection Off) |
 | BitLocker D: | Not encrypted (0%, Protection Off) |
 | Windows Defender | Installed, Engine 1.1.26010.1 |
@@ -255,17 +264,13 @@ All of the following were set to **"No Auditing"**:
 
 **Local Accounts:**
 
-| Account | SID | Status |
-|---------|-----|--------|
-| tazdevil4 | -500 | Admin group, last logged on |
-| Administrator | -1000 | Admin group, **password never expires** |
-| Guest | -501 | Active, **password never expires** |
-| DefaultAccount | — | Disabled |
-| WDAGUtilityAccount | — | Disabled |
-
-![System Details](screenshots/image14.png)
-
-![Local Accounts](screenshots/image15.png)
+| Account | Status |
+|---------|--------|
+| tazdevil4 | Admin group, last logged on |
+| Administrator | Admin group, **password never expires** |
+| Guest | Active, **password never expires** |
+| DefaultAccount | Disabled |
+| WDAGUtilityAccount | Disabled |
 
 ---
 
@@ -284,10 +289,10 @@ The `Guest` and `Administrator` accounts are high-value targets. Leaving Guest a
 With every audit policy set to "No Auditing," there are zero logs to investigate after an incident. Auditing must be treated as non-negotiable infrastructure. Enable the full STIG audit policy set from day one.
 
 ### 5. The Firewall Was Completely Off
-With RDP open on 3389 and no firewall on any profile, the machine was fully reachable. Never disable the Windows Firewall without a compensating control. Create explicit rules for needed ports instead of turning the firewall off.
+With RDP open on port 3389 and no firewall on any profile, the machine was fully reachable. Never disable the Windows Firewall without a compensating control. Create explicit rules for needed ports instead of turning the firewall off.
 
 ### 6. Application Stubs Create Real Vulnerabilities
-Teams and Outlook stub packages (`1.0.0.0`) sitting in WindowsApps were flagged for CVSS 7.5 and 8.1 CVEs including an RCE. Audit installed packages after deployment and remove or update stubs.
+Teams and Outlook stub packages (`1.0.0.0`) in WindowsApps were flagged for CVSS 7.5 and 8.1 CVEs including an RCE. Audit installed packages after deployment and remove or update stubs.
 
 ### 7. PowerShell v2 Is a Security Bypass
 PS v2 has no script block logging, no AMSI, and no constrained language mode. Always run:
@@ -314,35 +319,33 @@ Lab VMs routinely get promoted to production or connected to real infrastructure
 | 4 | Enable Windows Firewall on all profiles with explicit allow rules |
 | 5 | Apply Windows updates and remove/update all application stubs |
 
-![Remediation Summary](screenshots/image16.png)
+![Overall takeaway and remediation summary](screenshots/image17.png)
 
 ---
 
 ## Screenshots
 
-All 17 screenshots captured during the lab are embedded throughout this document and stored in the [`screenshots/`](screenshots/) folder.
+All 17 screenshots are embedded in the [Azure VM Setup](#azure-vm-setup) section above and stored in the [`screenshots/`](screenshots/) folder.
 
 | File | Description |
 |------|-------------|
-| image1.png | Azure VNet creation |
-| image2.png | Subnet configuration |
-| image3.png | VM deployment |
-| image4.png | VM network settings |
-| image5.png | Account management — Admin/Guest setup |
-| image6.png | Firewall disabled configuration |
-| image7.png | Tenable scan summary dashboard |
-| image8.png | Vulnerability overview |
-| image9.png | High severity findings detail |
-| image10.png | BitLocker status (unencrypted) |
-| image11.png | Password policy failures |
-| image12.png | Firewall STIG failure |
-| image13.png | Audit policy failures |
-| image14.png | System details |
-| image15.png | Local accounts |
-| image16.png | Remediation summary |
-| image17.png | Full scan report |
-
-![Full Scan Report](screenshots/image17.png)
+| image1.png | VM creation — name, OS, generation, architecture |
+| image2.png | VNet and subnet configuration |
+| image3.png | VM deployed — Bastion / RDP connect options |
+| image4.png | Downloading and opening the RDP file |
+| image5.png | RDP connection in progress |
+| image6.png | Opening wf.msc to disable the firewall |
+| image7.png | Firewall disabled — all profiles turn red |
+| image8.png | Computer Management — enabling Administrator account |
+| image9.png | Creating Administrator with blank password |
+| image10.png | Adding Administrator to Administrators group |
+| image11.png | Administrator Properties — Member Of tab |
+| image12.png | Administrators group — confirming membership |
+| image13.png | Administrator account membership confirmed |
+| image14.png | Guest account — password never expires, added to Administrators |
+| image15.png | Setting blank password on Guest account |
+| image16.png | Confirming Guest account blank password |
+| image17.png | Overall takeaway and remediation summary |
 
 ---
 
@@ -352,7 +355,6 @@ All 17 screenshots captured during the lab are embedded throughout this document
 |------|-------------|
 | `Disa-Scan-Win-11-Fred_Scan1.pdf` | Full Tenable DISA STIG scan report (PDF) |
 | `Azure-vm-stig-scan.docx` | Lab documentation and scan write-up (Word) |
-| `azure_VM_4_DISA_STIG_SCAN.txt` | Azure VM connection and credential info |
 | `screenshots/` | 17 PNG screenshots from the lab |
 
 ---
